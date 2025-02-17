@@ -13,3 +13,6 @@ docs/
 
 # foundry.toml
 foundry.toml
+
+#gas
+.gas-snapshot
