@@ -59,7 +59,7 @@ contract Election {
         public
         view
         returns(bool) {
-        return s_hasVoted[voter];
+            return s_hasVoted[voter];
         }
 
     //voteCandidate
