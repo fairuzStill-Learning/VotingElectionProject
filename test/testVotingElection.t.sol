@@ -6,7 +6,7 @@ import {Election} from "../src/VotingElection.sol";
 
 contract ElectionTest is Test {
     Election election;
-    address owner = address(this);
+    // address owner = address(this);
     address voter1 = address(0x123);
     address voter2 = address(0x456);
 
@@ -16,7 +16,7 @@ contract ElectionTest is Test {
         election = new Election();
 
         //owner start the election
-        vm.prank(owner);
+        vm.prank(election.getOwner());
         election.startElection();
 
         election.addCandidate("ruz");
@@ -26,13 +26,10 @@ contract ElectionTest is Test {
     //test function addCandidate
     function testAddCandidate() public {
         //owner add candidate for election
-        vm.prank(owner);
+        vm.prank(election.getOwner());
         election.addCandidate("ruz");
         election.addCandidate("jon");
         console.log("berhasil menambahkan candidate");
-
-        (, uint256 voteCount) = election.candidates(0);
-        assertEq(voteCount, 0);
     }
 
     //test function getCandidate
@@ -53,43 +50,41 @@ contract ElectionTest is Test {
     function testVoteCandidateSuccess() public {
         vm.prank(voter1); //voter1 voted to
         election.voteCandidate(0); //index 0 "ruz"
-
-        (, uint256 voteCount) = election.candidates(0); //set voteCount to candidate 0 "ruz"
-        assertEq(voteCount, 1); //voteCount candidate 0 is 1
+        bool hasVoted = election.getAddressHasVoted(voter1);
+        assertEq(hasVoted, true);
+        console.log(hasVoted, "1");
     }
 
-    // //test function voteCandidate when voterVoteTwice(Fail)
-    // function testVoterVoteTwiceFail() public {
-    //     //voter1 voted to candidate 1 "jon"
-    //     vm.prank(voter1);
-    //     election.voteCandidate(1);
+    //test function voteCandidate when voterVoteTwice(Fail)
+    function testVoterVoteTwiceFail() public {
+        //voter1 voted to candidate 1 "jon"
+        vm.prank(voter1);
+        election.voteCandidate(1);
 
-    //     //and he voted again to candidate 0 "ruz"
-    //     vm.prank(voter1);
-    //     election.voteCandidate(0);
-    // }
+        vm.expectRevert();
 
-    // //test function voteCandidate when election not started yet/end(Fail)
-    // function testVoterVoteWhenElectionEnd() public {
-    //     //owner make election end
-    //     vm.prank(owner);
-    //     election.endElection();
+        //and he voted again to candidate 0 "ruz"
+        vm.prank(voter1);
+        election.voteCandidate(0);
+    }
 
-    //     //and voter2 try to vote when election end
-    //     vm.prank(voter2);
-    //     election.voteCandidate(1);
+    //test function voteCandidate when election not started yet/end(Fail)
+    function testVoterVoteWhenElectionEnd() public {
+        //owner make election end
+        vm.prank(election.getOwner());
+        election.endElection();
 
-    //     (, uint256 voteCount) = election.candidates(1);
-    //     assertEq(voteCount, 1);
-    // }
+        //and voter2 try to vote when election end
+        vm.prank(voter2);
+        vm.expectRevert();
+        election.voteCandidate(1);
+    }
 
-    // //test function voteCandidate when voterVoteToInvalidCandidate(Fail)
-    // function testVoterVoteToInvalidCandidate() public {
-    //     //voter1 vote to unkwon candidate
-    //     vm.prank(voter1);
-    //     election.voteCandidate(99);
-
-    //     (, uint256 voteCount) = election.candidates(99);
-    //     assertEq(voteCount, 1);
-    // }
+    //test function voteCandidate when voterVoteToInvalidCandidate(Fail)
+    function testVoterVoteToInvalidCandidate() public {
+        //voter1 vote to unkwon candidate
+        vm.prank(voter1);
+        vm.expectRevert();
+        election.voteCandidate(99);
+    }
 }
