@@ -1,0 +1,9 @@
+//before gas optimization
+[PASS] testAddCandidate() (gas: 78,765)
+[PASS] testGetCandidate() (gas: 25,449)
+[PASS] testVoteCandidateSuccess() (gas: 64,352)
+
+//after gas optimization
+[PASS] testAddCandidate() (gas: 68,535) save 10,230 gas
+[PASS] testGetCandidate() (gas: 25,228) save 221 gas
+[PASS] testVoteCandidateSuccess() (gas: 64,113) save 239 gas

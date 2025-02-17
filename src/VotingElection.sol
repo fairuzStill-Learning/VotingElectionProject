@@ -4,11 +4,10 @@ pragma solidity ^0.8.24;
 error Election__notOwner();
 
 contract Election {
-    bool electionActive;
-    Candidate[] public candidates;
-    address owner;
-    mapping(address => bool) hasVoted;
-    mapping(address => bool) addressVoted;
+    bool private s_electionActive;
+    Candidate[] private s_candidates;
+    address private immutable i_owner;
+    mapping(address => bool) private s_hasVoted;
 
     struct Candidate {
         string name;
@@ -16,57 +15,79 @@ contract Election {
     }
 
     constructor() {
-        owner = msg.sender;
+        i_owner = msg.sender;
     }
 
     //startElection
-    function startElection() public onlyOwner {
-        electionActive = true;
+    function startElection() 
+        public 
+        onlyOwner {
+        s_electionActive = true;
     }
 
     //endElection
-    function endElection() public onlyOwner {
-        electionActive = false;
+    function endElection() 
+        public 
+        onlyOwner {
+        s_electionActive = false;
     }
 
     //addCandidate
-    function addCandidate(string memory _name) public onlyOwner {
-        candidates.push(Candidate(_name, 0));
+    function addCandidate(string memory _name) 
+        public 
+        onlyOwner {
+        s_candidates.push(Candidate(_name, 0));
     }
 
     //getCandidate
-    function getCandidate() public view returns (Candidate[] memory) {
-        return candidates;
+    function getCandidate() 
+        public 
+        view   
+        returns (Candidate[] memory) {
+        return s_candidates;
     }
 
+    //getOwner
+    function getOwner()
+        public
+        view
+        returns(address) {
+            return i_owner;
+        }
+
+    function getAddressHasVoted(address voter)
+        public
+        view
+        returns(bool) {
+        return s_hasVoted[voter];
+        }
+
     //voteCandidate
-    function voteCandidate(uint256 _candidateIndex) public onlyDuringElection onlyVoteOnce {
-        require(_candidateIndex < candidates.length, "invalid candidate index");
-        candidates[_candidateIndex].voteCount++;
-        hasVoted[msg.sender] = true;
+    function voteCandidate(uint256 _candidateIndex) 
+        public 
+        onlyDuringElection 
+        onlyVoteOnce {
+            uint256 candidatesLength = s_candidates.length;
+            require(_candidateIndex < candidatesLength, "invalid candidate index");
+            s_candidates[_candidateIndex].voteCount++;
+            s_hasVoted[msg.sender] = true;
     }
 
     //modifier onlyOwner
     modifier onlyOwner() {
-        if (msg.sender != owner) {
-            revert Election__notOwner();
-        }
+        if (msg.sender != i_owner) revert Election__notOwner();
         _;
     }
 
     //modifier onlyDuringElection
     modifier onlyDuringElection() {
-        if (!electionActive) {
-            revert("Election is not started yet");
-        }
+        if (!s_electionActive) revert("Election is not started yet");
         _;
     }
 
     //modifier onlyVoteOnce
     modifier onlyVoteOnce() {
-        if (hasVoted[msg.sender]) {
-            revert("you've already voted");
-        }
+        if (s_hasVoted[msg.sender]) revert("you've already voted");
         _;
     }
 }
