@@ -3,32 +3,36 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "../lib/forge-std/src/Test.sol";
 import {Election} from "../src/VotingElection.sol";
+import {DeployVotingElectionContract} from "../script/DeployVotingElectionContract.s.sol";
 
 contract ElectionTest is Test {
     Election election;
     // address owner = address(this);
-    address voter1 = address(0x123);
-    address voter2 = address(0x456);
+    address public constant VOTER1 = address(1);
+    address public constant VOTER2 = address(2);
 
     //setUp for testing the Election
     function setUp() external {
-        //make new Election for this contract
-        election = new Election();
-
+        DeployVotingElectionContract deployVotingElectionContract = new DeployVotingElectionContract();
+        election = deployVotingElectionContract.run();
+        
         //owner start the election
         vm.prank(election.getOwner());
         election.startElection();
 
+        vm.startPrank(election.getOwner());
         election.addCandidate("ruz");
         election.addCandidate("jon");
+        vm.stopPrank();
     }
 
     //test function addCandidate
     function testAddCandidate() public {
         //owner add candidate for election
-        vm.prank(election.getOwner());
+        vm.startPrank(election.getOwner());
         election.addCandidate("ruz");
         election.addCandidate("jon");
+        vm.stopPrank();
         console.log("berhasil menambahkan candidate");
     }
 
@@ -48,23 +52,23 @@ contract ElectionTest is Test {
 
     //test function voteCandidate(success)
     function testVoteCandidateSuccess() public {
-        vm.prank(voter1); //voter1 voted to
+        vm.prank(VOTER1); //VOTER1 voted to
         election.voteCandidate(0); //index 0 "ruz"
-        bool hasVoted = election.getAddressHasVoted(voter1);
+        bool hasVoted = election.getAddressHasVoted(VOTER1);
         assertEq(hasVoted, true);
         console.log(hasVoted, "1");
     }
 
     //test function voteCandidate when voterVoteTwice(Fail)
     function testVoterVoteTwiceFail() public {
-        //voter1 voted to candidate 1 "jon"
-        vm.prank(voter1);
+        //VOTER1 voted to candidate 1 "jon"
+        vm.prank(VOTER1);
         election.voteCandidate(1);
 
         vm.expectRevert();
 
         //and he voted again to candidate 0 "ruz"
-        vm.prank(voter1);
+        vm.prank(VOTER1);
         election.voteCandidate(0);
     }
 
@@ -75,15 +79,15 @@ contract ElectionTest is Test {
         election.endElection();
 
         //and voter2 try to vote when election end
-        vm.prank(voter2);
+        vm.prank(VOTER2);
         vm.expectRevert();
         election.voteCandidate(1);
     }
 
     //test function voteCandidate when voterVoteToInvalidCandidate(Fail)
     function testVoterVoteToInvalidCandidate() public {
-        //voter1 vote to unkwon candidate
-        vm.prank(voter1);
+        //VOTER1 vote to unkwon candidate
+        vm.prank(VOTER1);
         vm.expectRevert();
         election.voteCandidate(99);
     }

@@ -1,12 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
 error Election__notOwner();
 
 contract Election {
     bool private s_electionActive;
     Candidate[] private s_candidates;
     address private immutable i_owner;
+    AggregatorV3Interface private immutable i_priceFeed;
     mapping(address => bool) private s_hasVoted;
 
     struct Candidate {
@@ -14,7 +17,8 @@ contract Election {
         uint256 voteCount;
     }
 
-    constructor() {
+    constructor(address priceFeed) {
+        i_priceFeed = AggregatorV3Interface(priceFeed);
         i_owner = msg.sender;
     }
 
